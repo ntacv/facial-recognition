@@ -1,0 +1,19 @@
+name: deepface
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - spyder
+  - jupyter
+  - scipy=1.7.3
+  - numpy=1.22.3
+  - nose
+  - matplotlib=3.5.1
+  - rope
+  - pyqt=5
+  - sympy=1.10.1
+  - keras=2.9.0
+  - opencv=4.0.1
+  - orange3=3.32.0
+  - tensorflow=2.9.1
+  - scikit-image=0.19.2

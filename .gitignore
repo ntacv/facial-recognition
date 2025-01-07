@@ -1,3 +1,7 @@
+.ignore
+data/cohn-kanade-organised
+venv_facial_recognition
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
