@@ -6,12 +6,15 @@ Created on Tue Dec 29 16:59:16 2020
 """
 
 import os, glob, re, sys, argparse, itertools
+import keras.optimizers
 import numpy as np
 import cv2
 import pandas as pd
 import matplotlib.pyplot as plt
 import sklearn, sklearn.preprocessing, sklearn.model_selection, sklearn.metrics
-import keras, keras.backend, keras.utils.np_utils, keras.preprocessing.image
+import keras, keras.backend, keras.preprocessing.image, keras.utils.np_utils
+import keras.layers as layers
+#from keras.preprocessing.image import ImageDataGenerator
 
 class KerasFaceAnalyzerBase():
     _g_ck_emotion_dict = {None:'???', 0:'Neutral', 1:'Anger', 2:'???', 3:'Disgust', 4:'Fear', 5:'Happiness', 6:'Sadness', 7:'Surprise'}
@@ -139,10 +142,41 @@ class KerasFaceAnalyzerBase():
         return X_test, Y_test
 
     def _build_train_model(self):
-        raise NotImplementedError('Keras model architecture needs to be implemented') 
+        
+        input_shape = (self._img_dim[0], self._img_dim[1], 1)
+        
+        """ if keras.backend.image_data_format() == 'channels_last':
+            input_shape = (self._img_dim[0], self._img_dim[1], 1)
+        elif keras.backend.image_data_format() == 'channels_first':
+            input_shape = (1, self._img_dim[0], self._img_dim[1])
+ """
+        model = keras.models.Sequential([
+            layers.Conv2D(32, (3, 3), padding='same', input_shape=input_shape),
+            layers.Activation('relu'),
+            layers.Conv2D(32, (3, 3), padding='same', activation='relu'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Dropout(0.2),
+            layers.Conv2D(64, (3, 3), padding='same', activation='relu'),
+            layers.Conv2D(64, (3, 3), padding='same', activation='relu'),
+            layers.Flatten(),
+            layers.Dense(1024),
+            layers.Flatten(),
+            layers.Dense(512),
+            layers.Activation('relu'),
+            layers.Dropout(0.2),
+            layers.Dense(7, activation='softmax')
+        ])
+
+        return model
+        #raise NotImplementedError('1X: Keras model architecture needs to be implemented') 
 
     def _compile_train_model(self, model):
-        raise NotImplementedError('Keras model compilation needs to be implemented') 
+        
+        model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.0001), 
+                      loss='categorical_crossentropy', 
+                      metrics=['accuracy'])
+        
+        #raise NotImplementedError('2X: Keras model compilation needs to be implemented') 
     
     def _build_data_generator(self, output_dir):
         X_train, Y_train = self._load_training_data(output_dir)
@@ -174,7 +208,8 @@ class KerasFaceAnalyzerBase():
         print('Training...')
         model_path = os.path.join(output_dir, model_fname)
         history_path = model_path+self._g_fname_ext_model_history
-        model_cb = keras.callbacks.ModelCheckpoint(filepath=model_path+self._g_fname_ext_model_per_epoch)
+        model_cb = keras.callbacks.ModelCheckpoint(filepath=model_path+self._g_fname_ext_model_per_epoch, 
+                                                   monitor='val_accuracyh', save_best_only=True, save_weights_only=False, mode='auto', save_freq='epoch')
         history_cb = keras.callbacks.CSVLogger(history_path, separator=",", append=False)
 
         history = model.fit(X_train, Y_train, verbose=1, shuffle=True, epochs=epochs, validation_split=.2, callbacks=[model_cb, history_cb])
@@ -218,6 +253,7 @@ class KerasFaceAnalyzerBase():
         self._compile_train_model(model)
 
         print('Loading training history...')
+        """
         history = pd.read_csv(history_path, sep=',', engine='python')
 
         plt.figure()
@@ -242,7 +278,7 @@ class KerasFaceAnalyzerBase():
         print('Evaluating model on train data...')
         score = model.evaluate(X_train, Y_train, verbose=0)
         print("%s: %.2f%%" % (model.metrics_names[1], score[1]*100))
-
+        """
     def test(self, output_dir, model_fname):
         model_path = os.path.join(output_dir, model_fname)
         history_path = model_path+self._g_fname_ext_model_history
@@ -304,7 +340,7 @@ def main(argv):
     model_fname = os.path.abspath(args.model_fname) if args.model_fname is not None else 'cnn_face_emotion.model'
     epochs = args.epochs
 
-    analyzer = KerasFaceAnalyzerBase()
+    analyzer = KerasFaceAnalyzerBase() #KerasFaceAnalyzerBase()
     
     analyzer.prepare_data(input_dir, output_dir)
     analyzer.train(output_dir, model_fname, epochs=epochs)

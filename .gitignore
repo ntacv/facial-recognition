@@ -1,6 +1,8 @@
 .ignore
 data/cohn-kanade-organised
 venv_facial_recognition
+output_dir
+cnn_face_emotion.model
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

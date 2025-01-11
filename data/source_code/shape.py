@@ -155,5 +155,5 @@ def main(argv):
     plt.show()
 
 if __name__ == '__main__':
-    sys.argv[0] = 'data/cohn-kanade-organised'
+    #sys.argv[0] = 'data/cohn-kanade-organised'
     main(sys.argv)
